@@ -2,9 +2,11 @@ import matplotlib.pyplot as plt
 from pickle import load
 from os import listdir
 from os.path import isfile, join
+import fnmatch
 import numpy as np
 from feast.ResultsProcessing import results_analysis_functions
 from matplotlib import rc, rcParams
+import pprint
 
 # The color set defined here is the Tableau 10 color set.
 color_set = np.array([
@@ -99,7 +101,7 @@ def abatement_cost_plotter(directory, gwp=34, discount_rate=0, gas_price=0):
     :return:
     """
     npv, emissions, techs = results_analysis_functions.results_analysis(directory, discount_rate, gas_price)
-    files = [f for f in listdir(directory) if isfile(join(directory, f))]
+    files = [f for f in listdir(directory) if isfile(join(directory, f)) and '.p' in f]
     with open(directory + '/' + files[0], 'rb') as f:
         sample = load(f)
     emissions = np.sum(emissions * sample.time.delta_t * 3600 * 24 / 1e6, axis=1)  # metric tonnes
@@ -109,6 +111,7 @@ def abatement_cost_plotter(directory, gwp=34, discount_rate=0, gas_price=0):
         em_abate[ind, :] = emissions[-1, :] - emissions[ind, :]
         cost_abate[ind, :] = -npv['Total'][ind, :]
     abatement_cost = cost_abate / em_abate / gwp
+    
     medianprops = dict(color='k')
     boxprops = dict(linewidth=4)
     boxplot = plt.boxplot(np.transpose(abatement_cost), medianprops=medianprops,
